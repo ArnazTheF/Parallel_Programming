@@ -1,3 +1,0 @@
-/home/a.semenov7/Parallel_Programming/task1_cmake/build/CMakeFiles/task1.dir
-/home/a.semenov7/Parallel_Programming/task1_cmake/build/CMakeFiles/edit_cache.dir
-/home/a.semenov7/Parallel_Programming/task1_cmake/build/CMakeFiles/rebuild_cache.dir
