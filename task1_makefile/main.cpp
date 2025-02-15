@@ -1,5 +1,4 @@
 #define _USE_MATH_DEFINES
-#define DOUBLE
 
 #include <iostream>
 #include <cmath>
@@ -23,8 +22,7 @@ void calculateAndPrintSum() {
 int main() {
     #ifdef FLOAT
         calculateAndPrintSum<float>();
-    #endif
-    #ifdef DOUBLE
+    #else
         calculateAndPrintSum<double>();
     #endif
 
