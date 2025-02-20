@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17
+CXXFLAGS = -Wall -Wextra -O2 -std=c++17
 TARGET = build/main
 SRC = main.cpp
 TYPE ?= double
