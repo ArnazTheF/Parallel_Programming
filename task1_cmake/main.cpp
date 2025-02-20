@@ -20,7 +20,7 @@ void calculateAndPrintSum() {
 }
 
 int main() {
-    #ifdef FLOAT
+    #ifdef USE_FLOAT
         calculateAndPrintSum<float>();
     #else
         calculateAndPrintSum<double>();
