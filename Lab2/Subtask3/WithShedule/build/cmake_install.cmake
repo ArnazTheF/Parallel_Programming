@@ -1,4 +1,4 @@
-# Install script for directory: /home/a.semenov7/Parallel_Without_git/Lab2/Subtask3/OneFlow
+# Install script for directory: /home/a.semenov7/Parallel_Programming/Lab2/Subtask3/WithShedule
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/a.semenov7/Parallel_Without_git/Lab2/Subtask3/OneFlow/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/a.semenov7/Parallel_Programming/Lab2/Subtask3/WithShedule/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
