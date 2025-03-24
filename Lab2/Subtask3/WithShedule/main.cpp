@@ -5,7 +5,7 @@
 #include <cmath>
 #include <omp.h>
 
-const int N = 20000;
+const int N = 1000;
 
 void matrixInit(std::vector<double>& A) {
     for (int ij = 0; ij < N * N; ij++) {
@@ -26,16 +26,17 @@ void vectorInit(std::vector<double>& B) {
 }
 
 double iteration(std::vector<double>& A, std::vector<double>& B, std::vector<double>& xprev, std::vector<double>& AxminB, int chunk_size) {
-    double tau = 0.00001;
-    double Ax = 0.0;
+    double tau = 0.1;
+    
 
     double distanceAxminB = 0;
     double distanceB = 0;
 
     #pragma omp parallel num_threads(20)
     {
+        double Ax = 0.0;
 
-        #pragma omp for schedule(dynamic, chunk_size)
+        #pragma omp for schedule(static, chunk_size)
         for (int ij = 0; ij < N * N; ij++) {
             int i = ij / N;
             int j = ij % N;

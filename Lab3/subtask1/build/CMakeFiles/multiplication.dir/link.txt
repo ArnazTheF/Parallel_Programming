@@ -1,0 +1,1 @@
+g++  -fopenmp -O2 CMakeFiles/multiplication.dir/multiplication.cpp.o -o bin/multiplication 

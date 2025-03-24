@@ -1,1 +1,3 @@
 Schedule Type,Chunk Size,Average Time (s)
+static,100,0.0768352
+static,1000,0.0361552
