@@ -24,8 +24,6 @@ th.detach()
 при чем .join() вызываем в том месте кода, в котором хотим дождаться выполнения дочернего потока
 */
 
-std::mutex mtx;
-
 void initialize_vector(std::vector<double>& vector, int start, int end, std::minstd_rand& gen) {
     for (int i = start; i < end; ++i) {
         vector[i] = gen() % 100;
@@ -95,8 +93,6 @@ int main() {
         const std::chrono::duration<double> elapsed_seconds = end - start;
 
         std::cout << "Time taken for multiplication: " << elapsed_seconds.count() << " seconds." << std::endl;
-
-        std::lock_guard<std::mutex> lock(mtx);
         std::ofstream file("40multithreaded40000.csv", std::ios::app);
         if (!file.is_open()) {
             std::cerr << "Error: Unable to open file for writing." << std::endl;
