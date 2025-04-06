@@ -2,12 +2,22 @@ import argparse
 import cv2
 import logging
 import os
+import sys
 import threading
 import time
 from queue import Queue, Empty
 
-logging.basicConfig(filename='log/app.log', level=logging.ERROR,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+file_handler = logging.FileHandler('log/app.log')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 class Sensor:
     def get(self):
@@ -25,11 +35,9 @@ class SensorX(Sensor):
 
 class SensorCam(Sensor):
     def __init__(self, cam_index, resolution):
-        # Используем AVFoundation для macOS
         self.cap = cv2.VideoCapture(cam_index, cv2.CAP_AVFOUNDATION)
         if not self.cap.isOpened():
             try:
-                # Пробуем другой бэкенд если AVFoundation не работает
                 self.cap = cv2.VideoCapture(cam_index)
                 if not self.cap.isOpened():
                     raise RuntimeError(f"Camera {cam_index} not found")
@@ -42,10 +50,15 @@ class SensorCam(Sensor):
 
     def get(self):
         ret, frame = self.cap.read()
-        if ret:
-            self._last_frame = frame
-        else:
+        if not ret:
+            self._error_count += 1
+            if self._error_count > 1:
+                logging.error("Camera disconnected or failed")
+                raise RuntimeError("Camera disconnected")
             logging.warning("Failed to read frame from camera")
+            return None
+        self._error_count = 0 
+        self._last_frame = frame
         return self._last_frame
 
     def __del__(self):
@@ -56,11 +69,13 @@ class WindowImage:
     def __init__(self, freq):
         self.window_name = "Sensor Display"
         self.freq = freq
+        self.interval = max(1, int(1000 / self.freq))
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
     def show(self, img):
         if img is not None:
             cv2.imshow(self.window_name, img)
+        return cv2.waitKey(self.interval)
 
     def __del__(self):
         cv2.destroyWindow(self.window_name)
@@ -70,15 +85,19 @@ def sensor_thread(sensor, queue, stop_event, max_queue_size=1):
         try:
             data = sensor.get()
             if data is not None:
-                # Очищаем очередь если она заполнена
                 while queue.qsize() >= max_queue_size:
                     try:
                         queue.get_nowait()
                     except Empty:
                         break
                 queue.put(data)
-        except Exception as e:
+        except RuntimeError as e:
             logging.error(f"Sensor error: {e}")
+            stop_event.set() 
+            break
+        except Exception as e:
+            logging.error(f"Unexpected sensor error: {e}")
+            stop_event.set()
             break
 
 def main():
@@ -111,7 +130,7 @@ def main():
     }
 
     queues = {
-        's0': Queue(maxsize=1),  # Храним только последнее значение
+        's0': Queue(maxsize=1),
         's1': Queue(maxsize=1),
         's2': Queue(maxsize=1),
         'cam': Queue(maxsize=1)
@@ -122,7 +141,7 @@ def main():
 
     for name in sensors:
         t = threading.Thread(target=sensor_thread, 
-                           args=(sensors[name], queues[name], stop_event))
+                           args=(sensors[name], queues[name], stop_event), daemon=True)
         t.start()
         threads.append(t)
 
@@ -132,8 +151,8 @@ def main():
 
     try:
         interval = max(1, int(1000 / args.freq))
-        while True:
-            # Получаем только последние значения из очередей
+        while not stop_event.is_set():
+            #start_time = time.time()
             for name in ['s0', 's1', 's2']:
                 try:
                     sensor_data[name] = queues[name].get_nowait()
@@ -150,18 +169,30 @@ def main():
                 text = f"S0: {sensor_data['s0']}  S1: {sensor_data['s1']}  S2: {sensor_data['s2']}"
                 cv2.putText(img, text, (50, img.shape[0]-20), 
                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                window.show(img)
 
-            if cv2.waitKey(interval) & 0xFF == ord('q'):
-                break
+                key = window.show(img)
+                if key == ord('q') or key == 27:
+                    stop_event.set()
+                    logging.info("Отключаем камеру")
+                    break
+            
+            cv2.waitKey(1)
+            
+            """elapsed = time.time() - start_time
+            target_delay = max(0, (1.0 / args.freq) - elapsed)
+            time.sleep(target_delay)"""
+
 
     except KeyboardInterrupt:
+        logging.warning("Завершение через ctrl+c")
         pass
     finally:
         stop_event.set()
+        logging.info("Синхронизируем потоки")
         for t in threads:
             t.join(timeout=1)
         cv2.destroyAllWindows()
+        logging.info("Программа завершает своё выполнение")
 
 if __name__ == "__main__":
     main()
