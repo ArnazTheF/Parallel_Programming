@@ -1,0 +1,1 @@
+python inference_model.py vid.mp4 single/multi processed_vid.mp4
